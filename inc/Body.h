@@ -17,10 +17,10 @@ public:
 
     Body();
     Body(float _m, float _x, float _y, float _vx=0.0f, float _vy=0.0f);
+    ~Body();
 
     void simUpdatePos(float dt);
     void simUpdateVel(float dt);
-
 };
 
 #endif //NEXUS_BODY_H

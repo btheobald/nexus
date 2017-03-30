@@ -13,14 +13,20 @@ private:
 public:
     Vec2f(float x = 0.0f, float y = 0.0f); // Inits to param
     Vec2f(Vec2f *c); // Inits to existing (copy)
+    ~Vec2f();
 
     // Get and Set
     float get(int xy);
     void set(float x, float y);
+    void set(Vec2f c);
 
     // Overloaded Operators
     void operator+=(const Vec2f& b);
     Vec2f operator+(const Vec2f& b);
+    Vec2f operator-(const Vec2f& b);
+    Vec2f operator-();
+    Vec2f operator*(const Vec2f& b);
+    Vec2f operator/(float fac);
     Vec2f operator*(float fac);
 };
 

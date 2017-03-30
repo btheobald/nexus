@@ -20,10 +20,14 @@ Body::Body(float _m, float _x, float _y, float _vx, float _vy) {
     acc = Vec2f();
 }
 
+Body::~Body() {
+
+}
+
 void Body::simUpdatePos(float dt) {
     pos += vel*dt;
 }
 
 void Body::simUpdateVel(float dt) {
-    pos += acc*dt;
+    vel += acc*dt;
 }
