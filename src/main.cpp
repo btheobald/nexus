@@ -13,25 +13,21 @@ int main() {
     tracker.push_back(new Body(100.0, 0.0, 0.0));
     tracker.push_back(new Body(1.0, 10.0, 0.0, 0.0, 1.0));
 
-    for(int i = 0; i < 50; i++) {
+    for(int i = 0; i < 200; i++) {
         integrateTracker(tracker, 1.0f, 0.1f);
         printTracker(tracker);
     }
 }
 
 void integrateTracker(std::vector<Body *> &t, float dT, float G) {
-    for(int n = 0; n < t.size(); n++) {
-        t[n]->simUpdateVel(dT/2);
-    }
-
     calculateAcceleration(t, G);
 
     for(int n = 0; n < t.size(); n++) {
-        t[n]->simUpdatePos(dT);
+        t[n]->simUpdateVel(dT);
     }
 
     for(int n = 0; n < t.size(); n++) {
-        t[n]->simUpdateVel(dT/2);
+        t[n]->simUpdatePos(dT);
     }
 }
 
