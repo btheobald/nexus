@@ -28,7 +28,7 @@ int main() {
 
     root.insert(tracker[0]);
     root.insert(tracker[1]);
-    root.insert(tracker[2]);
+
     printTree(&root, 0);
 
     return 0;
@@ -82,7 +82,7 @@ void insertTabs(int n) {
 
 void printTree(Node *root, int level) {
     insertTabs(level);
-    std::cout << "\\-" << level << std::endl;
+    std::cout << "\\-" << level << "  | m: " << root->nodeBody->mass << " | x: " << root->nodeBody->pos.get(0) << " | y: " << root->nodeBody->pos.get(1) << std::endl;
     for (int i = 0; i < 4; i++) {
         if (root->branches[i]) {
             insertTabs(level + 1);

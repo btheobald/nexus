@@ -21,6 +21,7 @@ public:
     ~Node();
 
     int insert(Body *b);
+    int updateAvg();
 };
 
 #endif //NEXUS_NODE_H

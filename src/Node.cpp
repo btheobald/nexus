@@ -31,7 +31,6 @@ int Node::insert(Body *b) {
         int nQuad = nodeBound->getQuadrant(b->pos);
         if((nodeBody->pos == b->pos) & (nodeBody->mass != -1)) {
             // If bodies are in the same position abort.
-            std::cout << "X" << std::endl;
             return -1;
         }
         if(branches[nQuad] != nullptr) {
@@ -46,6 +45,7 @@ int Node::insert(Body *b) {
                 insert(tmp);
             }
         }
+        updateAvg();
     }
     return 0;
 }
@@ -62,4 +62,33 @@ int Node::firstNew() {
     if(check == 1) return 1; // If first new quadrant
 
     return 0; // If not first
+}
+
+int Node::updateAvg() {
+    int hasBranch = 0;
+    for(int b = 0; b < 4; b++) {
+        if(branches[b] != nullptr) {
+            hasBranch = 1;
+        }
+    }
+    if(!hasBranch) {
+        return 0;
+    }
+
+    nodeBody->mass = 0;
+    nodeBody->pos.set(0.0f, 0.0f);
+
+    for(int b = 0; b < 4; b++) {
+        if(branches[b] != nullptr) {
+            if(branches[b]->nodeBody != nullptr) {
+                branches[b]->updateAvg();
+                Vec2f wA = nodeBody->pos * nodeBody->mass;
+                Vec2f wB = branches[b]->nodeBody->pos * branches[b]->nodeBody->mass;
+                float mT = nodeBody->mass + branches[b]->nodeBody->mass;
+
+                nodeBody->pos = ((wA + wB)/mT);
+                nodeBody->mass = mT;
+            }
+        }
+    }
 }
