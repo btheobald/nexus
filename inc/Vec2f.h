@@ -16,7 +16,7 @@ public:
 
     // Get and Set
     float get(int xy);
-    void set(float x = this->x, float y = this->y);
+    void set(float x, float y);
 
     // Overloaded Operators
     void operator+=(const Vec2f& b);

@@ -21,6 +21,6 @@ download_project(
 add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
 
 #set(test_SRCS ADD ALL TEST SOURCE FILES HERE)
-add_executable(runUnitTests gtest.cpp ${test_SRCS})
+add_executable(runUnitTests gtest.cpp ${test_SRCS} vec2f_checks.cpp)
 target_link_libraries(runUnitTests gtest gmock nexuscore)
 #add_test(runUnitTests runUnitTests) #included in all tutorials but I don't know what it actually does.
