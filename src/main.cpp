@@ -1,11 +1,15 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <Node.h>
 #include "Body.h"
 
 void integrateTracker(std::vector<Body *> &t, float dT, float G);
-void calculateAcceleration(std::vector<Body *> &t, float G);
+void calculateAccelerationBrute(std::vector<Body *> &t, float G);
 void printTracker(std::vector<Body *> &t);
+
+void insertTabs(int n);
+void printTree(Node *root, int level);
 
 int main() {
     std::vector<Body *> tracker;
@@ -13,14 +17,25 @@ int main() {
     tracker.push_back(new Body(100.0, 0.0, 0.0));
     tracker.push_back(new Body(1.0, 10.0, 0.0, 0.0, 1.0));
 
-    for(int i = 0; i < 200; i++) {
+    /*for(int i = 0; i < 100; i++) {
         integrateTracker(tracker, 1.0f, 0.1f);
-        printTracker(tracker);
-    }
+        //printTracker(tracker);
+    }*/
+
+    std::cout << "Starting quadtree contruction." << std::endl;
+
+    Node root = Node(new Bound(0, 0, 20));
+
+    root.insert(tracker[0]);
+    root.insert(tracker[1]);
+    root.insert(tracker[2]);
+    printTree(&root, 0);
+
+    return 0;
 }
 
 void integrateTracker(std::vector<Body *> &t, float dT, float G) {
-    calculateAcceleration(t, G);
+    calculateAccelerationBrute(t, G);
 
     for(int n = 0; n < t.size(); n++) {
         t[n]->simUpdateVel(dT);
@@ -31,7 +46,7 @@ void integrateTracker(std::vector<Body *> &t, float dT, float G) {
     }
 }
 
-void calculateAcceleration(std::vector<Body *> &t, float G) {
+void calculateAccelerationBrute(std::vector<Body *> &t, float G) {
     for(unsigned int i = 0; i < t.size(); i++) {
         t[i]->acc.set(0.0f, 0.0f);
     }
@@ -57,4 +72,22 @@ void printTracker(std::vector<Body *> &t) {
         std::cout << t[n]->pos.get(0) << " " << t[n]->pos.get(1) << "  ";
     }
     std::cout << std::endl;
+}
+
+void insertTabs(int n) {
+    for(int l = 0; l < n; l++) {
+        std::cout << "  ";
+    }
+}
+
+void printTree(Node *root, int level) {
+    insertTabs(level);
+    std::cout << "\\-" << level << std::endl;
+    for (int i = 0; i < 4; i++) {
+        if (root->branches[i]) {
+            insertTabs(level + 1);
+            std::cout << "|->B" << i << std::endl;
+            printTree(root->branches[i], level + 1);
+        }
+    }
 }

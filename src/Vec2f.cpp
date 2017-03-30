@@ -73,3 +73,11 @@ Vec2f Vec2f::operator/(float fac) {
     tmp.y = this->y / fac;
     return tmp;
 }
+
+bool Vec2f::operator==(const Vec2f &b) {
+    if((this->x == b.x) & (this->y == b.y)) {
+        return true;
+    } else {
+        return false;
+    }
+}

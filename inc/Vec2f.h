@@ -28,6 +28,7 @@ public:
     Vec2f operator*(const Vec2f& b);
     Vec2f operator/(float fac);
     Vec2f operator*(float fac);
+    bool  operator==(const Vec2f &b);
 };
 
 

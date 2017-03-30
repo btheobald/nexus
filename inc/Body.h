@@ -21,6 +21,8 @@ public:
 
     void simUpdatePos(float dt);
     void simUpdateVel(float dt);
+
+
 };
 
 #endif //NEXUS_BODY_H
