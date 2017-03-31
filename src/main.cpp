@@ -2,7 +2,8 @@
 #include <vector>
 #include <cmath>
 #include <ctime>
-#include <Node.h>
+#include <random>
+#include "Node.h"
 #include "Body.h"
 
 void integrateTracker(std::vector<Body *> &t, float dT, float G);
@@ -13,17 +14,48 @@ void calculateAccelerationQuadtree(std::vector<Body *> &t, Node *node, float G);
 void treeRecurse(Body *currentBody, Node *n, float G);
 void printTracker(std::vector<Body *> &t);
 
-
 void insertTabs(int n);
 void printTree(Node *root, int level);
 
 int main() {
+    srand(time(NULL));
+
     std::vector<Body *> tracker;
-    tracker.push_back(new Body(1.0, -40.0, 35.0));
+    /*tracker.push_back(new Body(1.0, -40.0, 35.0));
     tracker.push_back(new Body(2.0, 20.0, 45.0));
     tracker.push_back(new Body(3.0, 5.0, 10.0));
     tracker.push_back(new Body(4.0, 45.0, 15.0));
-    tracker.push_back(new Body(5.0, 35.0, -40.0));
+    tracker.push_back(new Body(5.0, 35.0, -40.0));*/
+
+    // Use Mersenne Twister for RNE within range.
+    std::uniform_real_distribution<> pos(0, 1000*2);
+    // Use random device for seed value
+    std::random_device r;
+    std::mt19937 gen(r());
+    //std::mt19937 gen; // Use for desktop valgrind - random_device causes segfault
+    // Temporary Variables
+    double tempRand, tempCirX, tempCirY, tempDist, tempVelX, tempVelY;
+    // Add Central Body
+    tracker.push_back(new Body(100, 0, 0));
+    //int bodyOffset = bodyStore.size() - 1;
+    for(int bIDC = 0; bIDC < 1000; bIDC++) {
+        // Ensure that bodies are not too close to center.
+        do {
+            tempRand = pos(gen) - 1000;
+        } while ((tempRand < 100) & (tempRand > -100));
+        // Map to Circle
+        tempCirX = (tempRand * std::cos(2 * M_PI * tempRand));
+        tempCirY = (tempRand * std::sin(2 * M_PI * tempRand));
+
+        // Calculate Distance to Body
+        tempDist = std::sqrt(std::pow(tempCirX, 2) + std::pow(tempCirY, 2));
+
+        // Calc Velocity
+        tempVelX = copysign(std::sqrt((1 * (100 + 0.1)) / std::pow(tempDist, 3)) * (tempCirY), (tempCirY));
+        tempVelY = copysign(std::sqrt((1 * (100 + 0.1)) / std::pow(tempDist, 3)) * (tempCirX), -(tempCirX));
+
+        tracker.push_back(new Body(0.1, tempCirX, tempCirY, tempVelX, tempVelY));
+    }
 
     struct timespec start, finish;
     double elapsed;
@@ -36,12 +68,12 @@ int main() {
     }*/
 
     for(int i = 0; i < 100; i++) {
-        Node root = Node(new Bound(0, 0, 50));
+        Node root = Node(new Bound(0, 0, 3000));
         for(int i = 0; i < tracker.size(); i++) {
             root.insert(tracker[i]);
         }
         integrateTracker2(tracker, &root, 2.0f, 1.0f);
-        printTracker(tracker);
+        //printTracker(tracker);
     }
 
     clock_gettime(CLOCK_MONOTONIC, &finish);
