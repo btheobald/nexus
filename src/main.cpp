@@ -37,11 +37,6 @@ int main() {
     GLFWwindow *window = setupWindow();
 
     std::vector<Body *> tracker;
-    /*tracker.push_back(new Body(1.0, -40.0, 35.0));
-    tracker.push_back(new Body(2.0, 20.0, 45.0));
-    tracker.push_back(new Body(3.0, 5.0, 10.0));
-    tracker.push_back(new Body(4.0, 45.0, 15.0));
-    tracker.push_back(new Body(5.0, 35.0, -40.0));*/
 
     //addSuperstructure(tracker, 1000, 500, -300, -300, 100, 0.1, 100, 1.0);
     //addSuperstructure(tracker, 200, 200, 500, 0, 50, 0.1, 100, 1.0);
@@ -49,7 +44,7 @@ int main() {
     //addSuperstructure(tracker, 1000, 500, 500, 500, 100, 0.01, 50, 1.0);
     //addSuperstructure(tracker, 1000, 500, -500, -500, 100, 0.01, 50, 1.0);
 
-    addSuperstructure(tracker, 25000, 1500, 0, 0, 100, 0.1, 100, 1.0);
+    addSuperstructure(tracker, 2000, 1500, 0, 0, 100, 0.1, 200, 1.0);
 
     struct timespec start, finish;
     double elapsed;
@@ -70,7 +65,7 @@ int main() {
         }
         //drawTree(&root, 0);
         //integrateTracker(tracker, 2.0f, 1.0f);
-        integrateTracker2(tracker, &root, 2.0f, 1.0f);
+        integrateTracker2(tracker, &root, 5.0f, 1.0f);
 
         clock_gettime(CLOCK_MONOTONIC, &finish);
 
@@ -146,14 +141,14 @@ void integrateTracker(std::vector<Body *> &t, float dT, float G) {
 
     for(int n = 0; n < t.size(); n++) {
         for(int i = n+1; i < t.size(); i++) {
-            Vec2f d = t[n]->pos - t[i]->pos;
-            float v = std::sqrt(std::pow(d.get(0),2) + std::pow(d.get(1),2));
+            float d[] = {t[n]->pos[0] - t[i]->pos[0], t[n]->pos[1] - t[i]->pos[1]};
+            float v = std::sqrt(std::pow(d[0],2) + std::pow(d[1],2));
             if (v < t[n]->radius+t[i]->radius) {
                 delete t[i];
                 t.erase(t.begin()+i);
             }
         }
-        if((t[n]->pos.get(0) > 2000) | (t[n]->pos.get(0) < -2000) | (t[n]->pos.get(1) > 2000) | (t[n]->pos.get(1) < -2000)) {
+        if((t[n]->pos[0] > 2000) | (t[n]->pos[0] < -2000) | (t[n]->pos[1] > 2000) | (t[n]->pos[1] < -2000)) {
             delete t[n];
             t.erase(t.begin()+n);
         }
@@ -164,7 +159,7 @@ void integrateTracker2(std::vector<Body *> &t, Node *root, float dT, float G) {
     calculateAccelerationQuadtree(t, root, G);
 
     for(int n = 0; n < t.size(); n++) {
-        t[n]->simUpdateVel(dT);
+        t[n]->simUpdateVel(dT/2);
     }
 
     for(int n = 0; n < t.size(); n++) {
@@ -172,42 +167,51 @@ void integrateTracker2(std::vector<Body *> &t, Node *root, float dT, float G) {
     }
 
     for(int n = 0; n < t.size(); n++) {
-        if((t[n]->pos.get(0) > 2000) | (t[n]->pos.get(0) < -2000) | (t[n]->pos.get(1) > 2000) | (t[n]->pos.get(1) < -2000)) {
+        if((t[n]->pos[0] > 2000) | (t[n]->pos[0] < -2000) | (t[n]->pos[1] > 2000) | (t[n]->pos[1] < -2000)) {
             delete t[n];
             t.erase(t.begin()+n);
         }
+    }
+
+    for(int n = 0; n < t.size(); n++) {
+        t[n]->simUpdateVel(dT/2);
     }
 }
 
 void calculateAccelerationBrute(std::vector<Body *> &t, float G) {
     for(unsigned int i = 0; i < t.size(); i++) {
-        t[i]->acc.set(0.0f, 0.0f);
+        t[i]->acc[0] = 0.0;
+        t[i]->acc[1] = 0.0;
     }
 
     for(int a = 0; a < t.size(); a++) {
         for(int b = a+1; b < t.size(); b++) {
-            Vec2f d = t[a]->pos - t[b]->pos;
-            float v = std::sqrt(std::pow(d.get(0),2) + std::pow(d.get(1),2));
+            float d[] = { t[a]->pos[0] - t[b]->pos[0], t[a]->pos[1] - t[b]->pos[1] };
+            float v = std::sqrt(std::pow(d[0],2) + std::pow(d[1],2));
 
             float fP = -(G * t[a]->mass * t[b]->mass) / std::pow(v,3);
-            Vec2f fXY = d * fP;
+            float fX = fP * d[0];
+            float fY = fP * d[1];
 
-            //std::cout << fXY.get(0) << " " << fXY.get(1) << std::endl;
-
-            t[a]->acc += fXY / t[a]->mass;
-            t[b]->acc += -(fXY) / t[b]->mass;
+            t[a]->acc[0] += fX / t[a]->mass;
+            t[a]->acc[1] += fY / t[a]->mass;
+            t[b]->acc[0] -= fX / t[b]->mass;
+            t[b]->acc[1] -= fY / t[b]->mass;
         }
     }
 }
 
 void calcForceSingle(Body *b, Node *n, float G) {
-    Vec2f d = b->pos - n->nodeBody->pos;
-    float v = std::sqrt(std::pow(d.get(0),2) + std::pow(d.get(1),2));
+    float d[] = {b->pos[0] - n->nodeBody->pos[0], b->pos[1] - n->nodeBody->pos[1]};
+    float v = std::sqrt(std::pow(d[0],2) + std::pow(d[1],2));
 
     float fP = -(G * b->mass * n->nodeBody->mass) / std::pow(v,3);
-    Vec2f fXY = d * fP;
+    float fX = fP * d[0];
+    float fY = fP * d[1];
 
-    b->acc += fXY / b->mass;
+
+    b->acc[0] += fX / b->mass;
+    b->acc[1] += fY / b->mass;
 }
 
 void treeRecurse(std::vector<Body *> &t, int currentBody, Node *node,  float G) {
@@ -218,8 +222,8 @@ void treeRecurse(std::vector<Body *> &t, int currentBody, Node *node,  float G) 
         }
     }
 
-    Vec2f d = t[currentBody]->pos - node->nodeBody->pos;
-    float v = std::sqrt(std::pow(d.get(0),2) + std::pow(d.get(1),2));
+    float d[] = {t[currentBody]->pos[0] - node->nodeBody->pos[0], t[currentBody]->pos[1] - node->nodeBody->pos[1]};
+    float v = std::sqrt(std::pow(d[0],2) + std::pow(d[1],2));
 
     if(!internal and node->nodeBody != t[currentBody]) {
         calcForceSingle(t[currentBody], node, G);
@@ -259,7 +263,8 @@ void treeRecurse(std::vector<Body *> &t, int currentBody, Node *node,  float G) 
 
 void calculateAccelerationQuadtree(std::vector<Body *> &t, Node *n, float G) {
     for(int i = 0; i < t.size(); i++) {
-        t[i]->acc.set(0.0f, 0.0f);
+        t[i]->acc[0] = 0.0f;
+        t[i]->acc[1] = 0.0f;
     }
 
     for(int a = 0; a < t.size(); a++) {
@@ -269,7 +274,7 @@ void calculateAccelerationQuadtree(std::vector<Body *> &t, Node *n, float G) {
 
 void printTracker(std::vector<Body *> &t) {
     for(int n = 0; n < t.size(); n++) {
-        std::cout << t[n]->pos.get(0) << " " << t[n]->pos.get(1) << "  ";
+        std::cout << t[n]->pos[0] << " " << t[n]->pos[1] << "  ";
     }
     std::cout << std::endl;
 }
@@ -282,7 +287,7 @@ void insertTabs(int n) {
 
 void printTree(Node *root, int level) {
     insertTabs(level);
-    std::cout << "\\-" << level << "  | m: " << root->nodeBody->mass << " | x: " << root->nodeBody->pos.get(0) << " | y: " << root->nodeBody->pos.get(1) << std::endl;
+    std::cout << "\\-" << level << "  | m: " << root->nodeBody->mass << " | x: " << root->nodeBody->pos[0] << " | y: " << root->nodeBody->pos[1] << std::endl;
     for (int i = 0; i < 4; i++) {
         if (root->branches[i]) {
             insertTabs(level + 1);
@@ -336,10 +341,10 @@ GLFWwindow *setupWindow(void) {
 void drawPoints(std::vector<Body *> &t) {
     // Render center point
     for(int n = 0; n < t.size(); n++) {
-        glPointSize(1.0f);
+        glPointSize(2.0f);
         glColor3b(127, 127, 127);
         glBegin(GL_POINTS);
-        glVertex2f(t[n]->pos.get(0), t[n]->pos.get(1));
+        glVertex2f(t[n]->pos[0], t[n]->pos[1]);
         glEnd();
         glColor3b(127, 127, 127);
     }

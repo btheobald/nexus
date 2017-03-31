@@ -14,20 +14,14 @@ Bound::Bound(float x, float y, float _half) {
     half = _half;
 }
 
-Bound::Bound(Vec2f center, float _half) {
-    centerX = center.get(0);
-    centerY = center.get(1);
-    half = _half;
-}
-
-int Bound::getQuadrant(Vec2f p) {
-    if((p.get(0) <= centerX) & (p.get(1) >  centerY))
+int Bound::getQuadrant(float x, float y) {
+    if((x <= centerX) & (y >  centerY))
         return 0;
-    if((p.get(0) >  centerX) & (p.get(1) >  centerY))
+    if((x >  centerX) & (y >  centerY))
         return 1;
-    if((p.get(0) <= centerX) & (p.get(1) <= centerY))
+    if((x <= centerX) & (y <= centerY))
         return 2;
-    if((p.get(0) >  centerX) & (p.get(1) <= centerY))
+    if((x >  centerX) & (y <= centerY))
         return 3;
     return -1;
 }

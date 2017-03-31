@@ -19,7 +19,6 @@ Node::~Node() {
             delete branches[i];
         }
     }
-    delete nodeBody;
     delete nodeBound;
 }
 
@@ -28,7 +27,7 @@ int Node::insert(Body *b) {
         nodeBody = b;
         return 0;
     } else {
-        int nQuad = nodeBound->getQuadrant(b->pos);
+        int nQuad = nodeBound->getQuadrant(b->pos[0],b->pos[1]);
         if((nodeBody->pos == b->pos) & (nodeBody->mass != -1)) {
             // If bodies are in the same position abort.
             return -1;
@@ -76,17 +75,21 @@ int Node::updateAvg() {
     }
 
     nodeBody->mass = 0;
-    nodeBody->pos.set(0.0f, 0.0f);
+    nodeBody->pos[0] = 0.0f;
+    nodeBody->pos[1] = 0.0f;
 
     for(int b = 0; b < 4; b++) {
         if(branches[b] != nullptr) {
             if(branches[b]->nodeBody != nullptr) {
                 branches[b]->updateAvg();
-                Vec2f wA = nodeBody->pos * nodeBody->mass;
-                Vec2f wB = branches[b]->nodeBody->pos * branches[b]->nodeBody->mass;
+                float wAx = nodeBody->pos[0] * nodeBody->mass;
+                float wAy = nodeBody->pos[1] * nodeBody->mass;
+                float wBx = branches[b]->nodeBody->pos[0] * branches[b]->nodeBody->mass;
+                float wBy = branches[b]->nodeBody->pos[1] * branches[b]->nodeBody->mass;
                 float mT = nodeBody->mass + branches[b]->nodeBody->mass;
 
-                nodeBody->pos = ((wA + wB)/mT);
+                nodeBody->pos[0] = (wAx + wBx)/mT;
+                nodeBody->pos[1] = (wAy + wBy)/mT;
                 nodeBody->mass = mT;
             }
         }

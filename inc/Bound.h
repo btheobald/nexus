@@ -18,10 +18,11 @@ private:
 public:
     Bound();
     Bound(float x, float y, float half);
-    Bound(Vec2f center, float half);
 
-    int getQuadrant(Vec2f p);
+    int getQuadrant(float x, float y);
     Bound* getNewBound(int q);
+    inline float getWidth() { return half*2; };
+    inline float getCenter(int xy) { if(xy) return centerY; else return centerX; };
 };
 
 
