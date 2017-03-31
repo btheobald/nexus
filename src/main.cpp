@@ -1,41 +1,75 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <ctime>
 #include <Node.h>
 #include "Body.h"
 
 void integrateTracker(std::vector<Body *> &t, float dT, float G);
+void integrateTracker2(std::vector<Body *> &t, Node *root, float dT, float G);
 void calculateAccelerationBrute(std::vector<Body *> &t, float G);
+void calcForceSingle(Body *b, Node *n, float G);
+void calculateAccelerationQuadtree(std::vector<Body *> &t, Node *node, float G);
+void treeRecurse(Body *currentBody, Node *n, float G);
 void printTracker(std::vector<Body *> &t);
+
 
 void insertTabs(int n);
 void printTree(Node *root, int level);
 
 int main() {
     std::vector<Body *> tracker;
-    // Init tracker vector with simple orbital configuration
-    tracker.push_back(new Body(100.0, 0.0, 0.0));
-    tracker.push_back(new Body(1.0, 10.0, 0.0, 0.0, 1.0));
+    tracker.push_back(new Body(1.0, -40.0, 35.0));
+    tracker.push_back(new Body(2.0, 20.0, 45.0));
+    tracker.push_back(new Body(3.0, 5.0, 10.0));
+    tracker.push_back(new Body(4.0, 45.0, 15.0));
+    tracker.push_back(new Body(5.0, 35.0, -40.0));
+
+    struct timespec start, finish;
+    double elapsed;
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     /*for(int i = 0; i < 100; i++) {
-        integrateTracker(tracker, 1.0f, 0.1f);
-        //printTracker(tracker);
+        integrateTracker(tracker, 2.0f, 1.0f);
+        printTracker(tracker);
     }*/
 
-    std::cout << "Starting quadtree contruction." << std::endl;
+    for(int i = 0; i < 100; i++) {
+        Node root = Node(new Bound(0, 0, 50));
+        for(int i = 0; i < tracker.size(); i++) {
+            root.insert(tracker[i]);
+        }
+        integrateTracker2(tracker, &root, 2.0f, 1.0f);
+        printTracker(tracker);
+    }
 
-    Node root = Node(new Bound(0, 0, 20));
+    clock_gettime(CLOCK_MONOTONIC, &finish);
 
-    root.insert(tracker[0]);
-    root.insert(tracker[1]);
+    elapsed = (finish.tv_sec - start.tv_sec);
+    elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 
-    printTree(&root, 0);
+    std::cout << elapsed << std::endl;
+
+    //printTree(&root, 0);
 
     return 0;
 }
 
 void integrateTracker(std::vector<Body *> &t, float dT, float G) {
     calculateAccelerationBrute(t, G);
+
+    for(int n = 0; n < t.size(); n++) {
+        t[n]->simUpdateVel(dT);
+    }
+
+    for(int n = 0; n < t.size(); n++) {
+        t[n]->simUpdatePos(dT);
+    }
+}
+
+void integrateTracker2(std::vector<Body *> &t, Node *root, float dT, float G) {
+    calculateAccelerationQuadtree(t, root, G);
 
     for(int n = 0; n < t.size(); n++) {
         t[n]->simUpdateVel(dT);
@@ -64,6 +98,56 @@ void calculateAccelerationBrute(std::vector<Body *> &t, float G) {
             t[a]->acc += fXY / t[a]->mass;
             t[b]->acc += -(fXY) / t[b]->mass;
         }
+    }
+}
+
+void calcForceSingle(Body *b, Node *n, float G) {
+    Vec2f d = b->pos - n->nodeBody->pos;
+    float v = std::sqrt(std::pow(d.get(0),2) + std::pow(d.get(1),2));
+
+    float fP = -(G * b->mass * n->nodeBody->mass) / std::pow(v,3);
+    Vec2f fXY = d * fP;
+
+    b->acc += fXY / b->mass;
+}
+
+void treeRecurse(Body *currentBody, Node *node, float G) {
+    int internal = 0;
+    for(int b = 0; b < 4; b++) {
+        if(node->branches[b] != nullptr) {
+            internal = 1;
+        }
+    }
+    if(!internal and node->nodeBody != currentBody) {
+        calcForceSingle(currentBody, node, G);
+        return;
+    } else {
+        Vec2f d = currentBody->pos - node->nodeBody->pos;
+        float v = std::sqrt(std::pow(d.get(0),2) + std::pow(d.get(1),2));
+        float s = node->nodeBound->getWidth();
+
+        float theta = 0.5;
+        float res = s/v;
+        if(res < theta) {
+            calcForceSingle(currentBody, node, G);
+            return;
+        } else {
+            for(int b = 0; b < 4; b++) {
+                if(node->branches[b] != nullptr) {
+                    treeRecurse(currentBody, node->branches[b], G);
+                }
+            }
+        }
+    }
+}
+
+void calculateAccelerationQuadtree(std::vector<Body *> &t, Node *n, float G) {
+    for(int i = 0; i < t.size(); i++) {
+        t[i]->acc.set(0.0f, 0.0f);
+    }
+
+    for(int a = 0; a < t.size(); a++) {
+        treeRecurse(t[a], n, G);
     }
 }
 
